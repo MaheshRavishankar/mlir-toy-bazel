@@ -115,11 +115,12 @@ void matmul_f32_impl(const float* input_a, const float* input_b, float* output,
 
 void matmul_f32_t_impl(const float* input_a, const float* input_b, float* output,
                      size_t row_dim, size_t inner_dim, size_t col_dim) {
+  size_t a_stride[2] = {inner_dim, 1};
+  size_t b_stride[2] = {inner_dim, 1};
+  size_t c_stride[2] = {col_dim, 1};
   matmul_strided_t_impl<float, float>(
       input_a, input_b, output, row_dim, inner_dim, col_dim,
-      /*a_stride=*/std::vector<size_t>{inner_dim, 1}.data(),
-      /*b_stride=*/std::vector<size_t>{inner_dim, 1}.data(),
-      /*output_stride=*/std::vector<size_t>{col_dim, 1}.data());
+      a_stride, b_stride, c_stride);
 }
 
 void matmul_f32_strided_impl(const float* input_a, const float* input_b,

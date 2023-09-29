@@ -14,19 +14,18 @@ static int matmul_f32_t_workgroup(void* params_ptr, void* context,
   system_plugin_t* plugin = (system_plugin_t*)context;
   typedef struct {
     const float* restrict binding0;
-    size_t binding0_offset;
+    long long binding0_offset;
     const float* restrict binding1;
-    size_t binding1_offset;
+    long long binding1_offset;
     float* restrict binding2;
-    size_t binding2_offset;
-    size_t d0;
-    size_t d1;
-    size_t d2;
+    long long binding2_offset;
+    long long d0;
+    long long d1;
+    long long d2;
     const uint64_t* restrict processor_data;
-    uint32_t processor_id;
   } params_t;
   const params_t* params = (const params_t*)params_ptr;
-  fprintf(plugin->file, "processor_id=%u\n", params->processor_id);
+  /* fprintf(plugin->file, "processor_id=%u\n", params->processor_id); */
   //fprintf(plugin->file, "thread_id=%zu\n", params->tid);
 
   /*
@@ -45,43 +44,58 @@ static int matmul_f32_t_workgroup(void* params_ptr, void* context,
             params->binding2[params->binding2_offset + i]);
   }
   */
-  printf("size_0: %zu; size_1: %zu; size_2: %zu\n", params->d0, params->d1,
-         params->d2);
+  /* printf("size_0: %zu; size_1: %zu; size_2: %zu\n", params->d0, params->d1, */
+  /*        params->d2); */
   
-  printf("Input A (LHS): \n");
-  printf("Size: %zu x %zu ", params->d0, params->d1);
-  for (size_t i = 0; i < params->d0; ++i) {
-    printf("\n");
-    printf("a[%zu]=", i);
-    for (size_t j = 0; j < params->d1; ++j) {
-      fprintf(plugin->file, "%g\t", params->binding0[params->binding0_offset+(i*params->d1)+j]);
-    }
-  }
-  printf("\n \n");
-  printf("Input B (RHS): \n");
-  printf("Size: %zu x %zu ", params->d2, params->d1);
-  for (size_t i = 0; i < params->d2; ++i) {
-    printf("\n");
-    printf("b[%zu]=", i);
-    for (size_t j = 0; j < params->d1; ++j) {
-      fprintf(plugin->file, "%g\t", params->binding1[params->binding1_offset+(i*params->d1)+j]);
-    }
-  }
-  printf("\n \n");
-  matmul_f32_t_impl(&params->binding0[params->binding0_offset],
-                  &params->binding1[params->binding1_offset],
-                  &params->binding2[params->binding2_offset], params->d0,
+  /* printf("Input A (LHS): \n"); */
+  /* printf("Size: %zu x %zu ", params->d0, params->d1); */
+  /* for (size_t i = 0; i < params->d0; ++i) { */
+  /*   printf("\n"); */
+  /*   printf("a[%zu]=", i); */
+  /*   for (size_t j = 0; j < params->d1; ++j) { */
+  /*     fprintf(plugin->file, "%g\t", params->binding0[params->binding0_offset+(i*params->d1)+j]); */
+  /*   } */
+  /* } */
+  /* printf("\n \n"); */
+  /* printf("Input B (RHS): \n"); */
+  /* printf("Size: %zu x %zu ", params->d2, params->d1); */
+  /* for (size_t i = 0; i < params->d2; ++i) { */
+  /*   printf("\n"); */
+  /*   printf("b[%zu]=", i); */
+  /*   for (size_t j = 0; j < params->d1; ++j) { */
+  /*     fprintf(plugin->file, "%g\t", params->binding1[params->binding1_offset+(i*params->d1)+j]); */
+  /*   } */
+  /* } */
+  /* printf("\n \n"); */
+  
+/*   matmul_f32_t_impl(params->binding0 + params->binding0_offset,
+                  params->binding1 + params->binding1_offset,
+                  params->binding2 + params->binding2_offset, params->d0,
                   params->d1, params->d2);
-
-  printf("Output size: %zu x %zu", params->d0, params->d2);
-  for (size_t i = 0; i < params->d0; ++i) {
-    printf("\n");
-    printf("out[%zu]=", i);
-    for (size_t j = 0; j < params->d2; ++j) {
-      fprintf(plugin->file, "%g\t", params->binding2[params->binding2_offset+(i*params->d2)+j]);
+ */
+  int64_t M = params->d0;
+  int64_t N = params->d2;
+  int64_t K = params->d1;
+  const float *lhs = params->binding0 + params->binding0_offset;
+  const float *rhs = params->binding1 + params->binding1_offset;
+  float *output = params->binding2 + params->binding2_offset;
+  for (int64_t i = 0; i < M ; i++) {
+    for (int64_t j = 0; j < N; j++) {
+      for (int64_t k = 0; k < K; k++) {
+        output[i * N + j] += lhs[i * K + k] * rhs[j * K + k];
+      }
     }
   }
-  printf("\n \n");
+
+  /* printf("Output size: %zu x %zu", params->d0, params->d2); */
+  /* for (size_t i = 0; i < params->d0; ++i) { */
+  /*   printf("\n"); */
+  /*   printf("out[%zu]=", i); */
+  /*   for (size_t j = 0; j < params->d2; ++j) { */
+  /*     fprintf(plugin->file, "%g\t", params->binding2[params->binding2_offset+(i*params->d2)+j]); */
+  /*   } */
+  /* } */
+  /* printf("\n \n"); */
   return 0;
 }
 
